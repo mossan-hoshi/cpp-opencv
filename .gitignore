@@ -403,3 +403,6 @@ FodyWeavers.xsd
 *.png
 *.PNG
 !data/sample.jpg
+
+# backup file
+*.bak
