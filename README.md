@@ -21,3 +21,4 @@ Template Visual Studio C++ solution using OpenCV.
        - version string pattern `%OPENCV_VERSION%` is replaced to inputted string.
    - This step overwite project setting file.If you already changed project files(added source code/change project setting or etc.), you should do this step by manually(change %OPENCV_VERSION% pattern in project setting file to your placed OpenCV version string).
 4. Build and Run
+   - x64/Debug or x64/Release are available 
