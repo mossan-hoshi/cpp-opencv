@@ -2,66 +2,96 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <typeinfo>
 #include <vector>
 
 class Argument {
  public:
-  Argument(std::vector<std::string>& names, std::vector<std::string>& values,
-           std::string description = "", std::string type = "string") {
-    this->initialize(names = names, values = values, description = description,
-                     type = type);
+  Argument(std::vector<std::string> command_options, std::string dest,
+           std::vector<std::string> values, std::string description,
+           std::string type) {
+    initialize(command_options = command_options, dest = dest, values = values,
+               description = description, type = type);
+  };
+  Argument(std::string command_option, std::string dest,
+           std::vector<std::string> values, std::string description,
+           std::string type) {
+    initialize(command_options = std::vector<std::string>{command_option},
+               dest = dest, values = values, description = description,
+               type = type);
+  };
+  Argument(std::vector<std::string> command_options, std::string dest,
+           std::string value, std::string description, std::string type) {
+    initialize(command_options = command_options, dest = dest,
+               values = std::vector<std::string>{value},
+               description = description, type = type);
+  };
+  Argument(std::string command_option, std::string dest, std::string value,
+           std::string description, std::string type) {
+    initialize(command_options = std::vector<std::string>{command_option},
+               dest = dest, values = std::vector<std::string>{value},
+               description = description, type = type);
   };
   Argument(const Argument& rhs) {
-    this->initialize(names = rhs.names, values = rhs.values,
-                     description = rhs.description, type = rhs.type);
+    initialize(command_options = rhs.command_options, dest = rhs.dest,
+               values = rhs.values, description = rhs.description,
+               type = rhs.type);
   }
 
   std::vector<std::string> get() { return values; };
 
-  bool IsNameMatched(std::string name) {
+  bool IsCommandOptionMatched(std::string command_option) {
     // erase '--' or '-'
-    const std::string compare_name =
-        name.replace(name.begin(), name.end(), "-", "");
-    for (int i = 0; i <= this->names.size(); i++) {
-      if (compare_name == this->names[i]) return true;
+    const std::string compare_command_option = command_option.replace(
+        command_option.begin(), command_option.end(), "-", "");
+    for (int i = 0; i <= this->command_options.size(); i++) {
+      if (compare_command_option == this->command_options[i]) return true;
     }
     return false;
   }
 
-  void SetValue(std::string valueStr) { this->values = std::vector{valueStr}; }
+  bool IsNameMatched(std::string dest) { return (dest == this->dest); }
+
+  void SetValue(std::string valueStr) {
+    this->values = std::vector<std::string>{valueStr};
+  }
   void SetValues(std::vector<std::string> valueStrs) {
     this->values = std::vector<std::string>();
     std::copy(valueStrs.begin(), valueStrs.end(), back_inserter(this->values));
     this->is_vector = true;
   }
 
-  void SetName(std::string name) {
-    this->SetNames(std::vector<std::string>{name});
+  void SetCommandOption(std::string name) {
+    SetCommandOptions(std::vector<std::string>{name});
   }
-  void SetNames(std::vector<std::string> names) {
-    for_each(names.begin(), names.end(), [&](std::string name) {
-      const std::string compare_name =
-          name.replace(name.begin(), name.end(), "-", "");
-      for_each(this->names.begin(), this->names.end(),
-               [name](std::string name2) {
-                 if (name2 == name) return true;
-               });
-    });
+  void SetCommandOptions(std::vector<std::string> options_to_set) {
+    command_options = std::vector<std::string>{};
+    for_each(options_to_set.begin(), options_to_set.end(),
+             [&](std::string option_to_set) {
+               option_to_set.erase(
+                   std::remove(option_to_set.begin(), option_to_set.end(), '-'),
+                   option_to_set.end());
+               std::cout << option_to_set << std::endl;
+               command_options.push_back(option_to_set);
+             });
   }
-  std::string getType() { return this->type; };
+  std::string getType() { return type; };
+  std::string getDest() { return dest; };
 
  private:
-  void initialize(std::vector<std::string>& names,
+  void initialize(std::vector<std::string>& command_options, std::string dest,
                   std::vector<std::string>& values,
                   std::string description = "", std::string type = "string") {
-    this->SetNames(names);
-    this->SetNames(values);
+    this->SetCommandOptions(command_options);
+    this->dest = dest;
+    this->SetValues(values);
     this->description = description;
     this->type = type;
   };
-  std::vector<std::string> names;
+  std::vector<std::string> command_options;
+  std::string dest;
   std::string description;
   std::string type;
   bool is_vector;
@@ -107,32 +137,95 @@ void convertStringToValue(std::string str, std::string& result) {
 class ArgumentParser {
  public:
   ArgumentParser() { Arguments = std::vector<Argument>{}; };
-  void AddArgument(std::vector<std::string> names,
-                   std::vector<std::string> values,
-                   std::string description = "",
-                   std::string type = "std::string") {
-    Arguments.push_back(Argument(names = names, values = values,
-                                 description = description,
-                                 type = this->getType(type)));
+
+  void AddArgument(
+      std::vector<std::string> command_options, std::string dest,
+      std::string type = "std::string",
+      std::vector<std::string> deaults = std::vector<std::string>{},
+      std::string description = "") {
+    Arguments.push_back(
+        Argument(command_options, dest, deaults, description, getType(type)));
+  }
+  void AddArgument(
+      std::string command_options, std::string dest,
+      std::string type = "std::string",
+      std::vector<std::string> deaults = std::vector<std::string>{},
+      std::string description = "") {
+    Arguments.push_back(
+        Argument(command_options, dest, deaults, description, getType(type)));
+  }
+  void AddArgument(std::vector<std::string> command_options, std::string dest,
+                   std::string type = "std::string", std::string deaults = "",
+                   std::string description = "") {
+    Arguments.push_back(
+        Argument(command_options, dest, deaults, description, getType(type)));
+  }
+  void AddArgument(std::string command_options, std::string dest,
+                   std::string type = "std::string", std::string deaults = "",
+                   std::string description = "") {
+    Arguments.push_back(
+        Argument(command_options, dest, deaults, description, getType(type)));
   }
 
-  template <class T>
-  std::vector<T> get(std::string name) const {
-    for_each(Arguments.begin(), Arguments.end(), [&](Argument arg) {
-      if (arg.IsNameMatched(name)) {
-        std::vector<T> values{};
-        auto valuesStr = arg.get();
-        for_each(valuesStr.begin(), valuesStr.end(), [&](std::string valueStr) {
-          T tmpResultValue;
-          convertStringToValue(valuesStr, tmpResultValue);
-          values.push_back(tmpResultValue);
-        });
+  bool is_single_hyphen_option(std::string argStr) {
+    if (argStr.size() < 2) return false;
+    return argStr[0] == '-' && argStr[1] != '-';
+  }
+  bool is_double_hyphen_option(std::string argStr) {
+    if (argStr.size() < 3) return false;
+    return argStr[0] == '-' && argStr[1] == '-';
+  }
+
+  void parse_args(int argc, char* argv[]) {
+    for (int i = 0; i < argc; i++) {
+      std::string argStr(argv[i]);
+      std::cout << argStr << std::endl;
+      if (is_double_hyphen_option(argStr)) {
+        std::unique_ptr<Argument> processingArgument(&getArgument(argStr));
+      } else {
+        processingArgument.
+      }
+      // TODO : single hyphen option
+    }
+  }
+
+  Argument& getArgument(std::string dest) {
+    for_each(Arguments.begin(), Arguments.end(), [&](Argument& arg) {
+      if (arg.IsNameMatched(dest)) {
+        return arg;
       }
     });
+    throw std::invalid_argument("[ERROR] no such argument : " + dest);
+  }
+
+  Argument& operator[](std::string dest) { return getArgument(dest); }
+
+  template <class T>
+  std::vector<T> get(std::string dest) const {
+    for_each(Arguments.begin(), Arguments.end(), [&](Argument arg) {
+      if (arg.IsCommandOptionMatched(dest)) {
+        std::vector<T> values{};
+        auto valuesStr = arg.get();
+        valueStringsToValues(valuesStr, values);
+        return values;
+      }
+    });
+    throw std::invalid_argument("[ERROR] no such argument : " + dest);
   }
 
  private:
   std::vector<Argument> Arguments;
+
+  template <class T>
+  void valueStringsToValues(std::vector<std::string>& valueStrs,
+                            std::vector<T>& values) {
+    values.clear();
+    for_each(valueStrs.begin(), valueStrs.end(), [&](std::string valueStr) {
+      T tmpResultValue;
+      convertStringToValue(valueStr, tmpResultValue);
+      values.push_back(tmpResultValue);
+    });
+  }
 
   bool isSameStrings(std::string str1, std::string str2) {
     return str1.size() == str2.size() &&
@@ -144,47 +237,49 @@ class ArgumentParser {
 
   bool isStringIncludedInStringVector(std::string str1,
                                       std::vector<std::string> stringVector) {
+    bool result = false;
     for_each(stringVector.begin(), stringVector.end(), [&](std::string str2) {
-      if (this->isSameStrings(str1, str2)) return true;
+      if (isSameStrings(str1, str2)) {
+        result = true;
+      }
     });
-    return false;
+    return result;
   }
 
   std::string getType(std::string typeStr) {
-    if (this->isStringIncludedInStringVector(typeStr,
-                                             {"char", "character", "c"})) {
+    if (isStringIncludedInStringVector(typeStr, {"char", "character", "c"})) {
       return typeid(char).name();
-    } else if (this->isStringIncludedInStringVector(
+    } else if (isStringIncludedInStringVector(
                    typeStr,
                    {"unsigned char", "unsigned character", "uchar", "uc"})) {
       return typeid(unsigned char).name();
-    } else if (this->isStringIncludedInStringVector(typeStr, {"short", "s"})) {
+    } else if (isStringIncludedInStringVector(typeStr, {"short", "s"})) {
       return typeid(short).name();
-    } else if (this->isStringIncludedInStringVector(
+    } else if (isStringIncludedInStringVector(
                    typeStr, {"unsigned short", "ushort", "us"})) {
       return typeid(unsigned short).name();
-    } else if (this->isStringIncludedInStringVector(typeStr,
-                                                    {"int", "integer", "i"})) {
+    } else if (isStringIncludedInStringVector(typeStr,
+                                              {"int", "integer", "i"})) {
       return typeid(int).name();
-    } else if (this->isStringIncludedInStringVector(
+    } else if (isStringIncludedInStringVector(
                    typeStr,
                    {"unsigned int", "unsigned integer", "uint", "ui"})) {
       return typeid(unsigned int).name();
-    } else if (this->isStringIncludedInStringVector(typeStr, {"long", "l"})) {
+    } else if (isStringIncludedInStringVector(typeStr, {"long", "l"})) {
       return typeid(long).name();
-    } else if (this->isStringIncludedInStringVector(
+    } else if (isStringIncludedInStringVector(
                    typeStr, {"unsigned long", "ulong", "ul"})) {
       return typeid(unsigned long).name();
-    } else if (this->isStringIncludedInStringVector(typeStr,
-                                                    {"long long", "ll"})) {
+    } else if (isStringIncludedInStringVector(typeStr, {"long long", "ll"})) {
       return typeid(long long).name();
-    } else if (this->isStringIncludedInStringVector(typeStr, {"float", "f"})) {
+    } else if (isStringIncludedInStringVector(typeStr, {"float", "f"})) {
       return typeid(float).name();
-    } else if (this->isStringIncludedInStringVector(typeStr, {"doube", "d"})) {
+    } else if (isStringIncludedInStringVector(typeStr, {"doube", "d"})) {
       return typeid(double).name();
-    } else if (this->isStringIncludedInStringVector(typeStr,
-                                                    {"string", "str", "s"})) {
+    } else if (isStringIncludedInStringVector(
+                   typeStr, {"std::string", "string", "str", "s"})) {
       return typeid(std::string).name();
     }
+    throw std::invalid_argument("[ERROR] invalid type String : " + typeStr);
   }
 };
