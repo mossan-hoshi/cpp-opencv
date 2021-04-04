@@ -393,3 +393,13 @@ FodyWeavers.xsd
 # library
 /lib/*
 !/lib/.gitkeep
+
+# images
+*.jpg
+*.JPG
+*.JPEG
+*.bmp
+*.BMP
+*.png
+*.PNG
+!data/sample.jpg
