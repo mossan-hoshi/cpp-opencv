@@ -4,8 +4,7 @@ Template Visual Studio C++ solution using OpenCV.
 ## Requirements
 - Windows 10
 - Visual Studio 2019(configurations is x64-Debug or x64-Release)
-- [p-ranav/argparse](https://github.com/p-ranav/argparse)(submodule in `lib/argparse`)
-  - It requires C++17
+- C++14 or over
 - OpenCV (any version which ready for VS2019 and has opencv_world*.dll)
   - We used 4.5.1
 
