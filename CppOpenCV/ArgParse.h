@@ -58,7 +58,7 @@ class Argument {
     this->values = std::vector<std::string>{valueStr};
   }
   void SetValues(std::vector<std::string> valueStrs) {
-    this->values = std::vector<std::string>();
+    this->values = std::vector<std::string>{};
     std::copy(valueStrs.begin(), valueStrs.end(), back_inserter(this->values));
     this->is_vector = true;
   }
@@ -167,34 +167,38 @@ class ArgumentParser {
         Argument(command_options, dest, deaults, description, getType(type)));
   }
 
-  bool is_single_hyphen_option(std::string argStr) {
-    if (argStr.size() < 2) return false;
-    return argStr[0] == '-' && argStr[1] != '-';
-  }
-  bool is_double_hyphen_option(std::string argStr) {
-    if (argStr.size() < 3) return false;
-    return argStr[0] == '-' && argStr[1] == '-';
-  }
-
-  void parse_args(int argc, char* argv[]) {
-    for (int i = 0; i < argc; i++) {
+  void ParseArgs(int argc, char* argv[]) {
+    std::vector<std::string> keys{};
+    std::vector<std::vector<std::string> > values{};
+    int option_index = -1;
+    // collect options
+    for (int i = 1; i < argc; i++) {
       std::string argStr(argv[i]);
       std::cout << argStr << std::endl;
-      if (is_double_hyphen_option(argStr)) {
-        std::unique_ptr<Argument> processingArgument(&getArgument(argStr));
+      if (isDoubleHyphenOption(argStr)) {
+        keys.push_back(eraseChar(argStr, '-'));
+        values.push_back(std::vector<std::string>{});
+        option_index += 1;
+      } else if (option_index >= 0) {
+        values[option_index].push_back(argStr);
       } else {
-        processingArgument.
+        throw std::invalid_argument("[ERROR] invalid option ");
       }
       // TODO : single hyphen option
+    }
+
+    // set arguments values
+    for (int i = 0; i < keys.size(); i++) {
+      getArgument(keys[i]).SetValues(values[i]);
     }
   }
 
   Argument& getArgument(std::string dest) {
-    for_each(Arguments.begin(), Arguments.end(), [&](Argument& arg) {
-      if (arg.IsNameMatched(dest)) {
-        return arg;
+    for (int i = 0; i < Arguments.size(); i++) {
+      if (Arguments[i].IsNameMatched(dest)) {
+        return Arguments[i];
       }
-    });
+    }
     throw std::invalid_argument("[ERROR] no such argument : " + dest);
   }
 
@@ -202,14 +206,14 @@ class ArgumentParser {
 
   template <class T>
   std::vector<T> get(std::string dest) const {
-    for_each(Arguments.begin(), Arguments.end(), [&](Argument arg) {
-      if (arg.IsCommandOptionMatched(dest)) {
+    for (int i = 0; i < Arguments.size(); i++) {
+      if (Arguments[i].IsCommandOptionMatched(dest)) {
         std::vector<T> values{};
-        auto valuesStr = arg.get();
+        auto valuesStr = Arguments[i].get();
         valueStringsToValues(valuesStr, values);
         return values;
       }
-    });
+    }
     throw std::invalid_argument("[ERROR] no such argument : " + dest);
   }
 
@@ -225,6 +229,20 @@ class ArgumentParser {
       convertStringToValue(valueStr, tmpResultValue);
       values.push_back(tmpResultValue);
     });
+  }
+
+  bool isSingleHyphenOption(std::string argStr) {
+    if (argStr.size() < 2) return false;
+    return argStr[0] == '-' && argStr[1] != '-';
+  }
+  bool isDoubleHyphenOption(std::string argStr) {
+    if (argStr.size() < 3) return false;
+    return argStr[0] == '-' && argStr[1] == '-';
+  }
+
+  std::string eraseChar(std::string str, char erase_char) {
+    str.erase(std::remove(str.begin(), str.end(), erase_char), str.end());
+    return str;
   }
 
   bool isSameStrings(std::string str1, std::string str2) {
