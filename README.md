@@ -19,5 +19,5 @@ Template Visual Studio C++ solution using OpenCV.
      - For example: `lib\opencv\build\x64\vc15\bin\opencv_world451.dll` then input `451`
      - this batch overwrite the project setting file by the replaced template(`CppOpenCV\CppOpenCV.vcxproj_sample`) content.
        - version string pattern `%OPENCV_VERSION%` is replaced to inputted string.
-   - This step overwite project setting file.If you manually changed project setting file, you should do this step by manually.
+   - This step overwite project setting file.If you already changed project files(added source code/change project setting or etc.), you should do this step by manually(change %OPENCV_VERSION% pattern in project setting file to your placed OpenCV version string).
 4. Build and Run
