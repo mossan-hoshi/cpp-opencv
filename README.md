@@ -1,3 +1,4 @@
+
 # CppOpenCV
 Template Visual Studio C++ solution using OpenCV.
 
@@ -13,6 +14,7 @@ Template Visual Studio C++ solution using OpenCV.
 2. Download and Place OpenCV
    - Download OpenCV from [official page](https://opencv.org/releases/)(For example opencv-4.5.1-vc14_vc15.exe)
    - Execute downloaded file and expand files in `lib` folder of this repogitory
+![README_step2](https://user-images.githubusercontent.com/52093236/113714619-8cfd6b80-9723-11eb-8aec-967a5ce3e4f4.png)
 3. Change Project Setting
    - Execute `scripts/step3_SetOpencvVersion.bat`and change OpenCV version information in project setting file(`CppOpenCV\CppOpenCV.vcxproj`)
      - This batch require the version string of placed OpenCV
